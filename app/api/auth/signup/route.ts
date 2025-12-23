@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       role: user.role,
     });
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       token,
       user: {
         id: user.id,
@@ -55,6 +55,11 @@ export async function POST(request: Request) {
       },
       message: 'ثبت‌نام موفقیت‌آمیز بود. شما در حالت انتظار هستید تا مدیر شما را تأیید کند.',
     });
+    res.headers.set(
+      'Set-Cookie',
+      `auth_token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Secure`
+    );
+    return res;
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json(

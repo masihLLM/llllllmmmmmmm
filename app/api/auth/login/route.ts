@@ -4,6 +4,15 @@ import { verifyPassword } from '@/lib/auth/password';
 import { generateToken } from '@/lib/auth/token';
 import { isInitialAdminLogin, createInitialAdmin } from '@/lib/auth/admin';
 
+function withAuthCookie(token: string, body: any) {
+  const res = NextResponse.json(body);
+  res.headers.set(
+    'Set-Cookie',
+    `auth_token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Secure`
+  );
+  return res;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -41,7 +50,7 @@ export async function POST(request: Request) {
         role: user.role,
       });
 
-      return NextResponse.json({
+      return withAuthCookie(token, {
         token,
         user: {
           id: user.id,
@@ -77,7 +86,7 @@ export async function POST(request: Request) {
       role: user.role,
     });
 
-    return NextResponse.json({
+    return withAuthCookie(token, {
       token,
       user: {
         id: user.id,

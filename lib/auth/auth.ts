@@ -8,9 +8,23 @@ export interface AuthUser {
   role: string;
 }
 
+function parseAuthCookie(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null;
+  const cookies = cookieHeader.split(';').map((c) => c.trim());
+  for (const c of cookies) {
+    if (c.startsWith('auth_token=')) {
+      return decodeURIComponent(c.slice('auth_token='.length));
+    }
+  }
+  return null;
+}
+
 export async function getAuthUser(request: NextRequest | Request): Promise<AuthUser | null> {
   const authHeader = request.headers.get('authorization');
-  const token = extractTokenFromHeader(authHeader);
+  const cookieHeader = request.headers.get('cookie');
+  const headerToken = extractTokenFromHeader(authHeader);
+  const cookieToken = parseAuthCookie(cookieHeader);
+  const token = headerToken || cookieToken;
   
   if (!token) return null;
   
