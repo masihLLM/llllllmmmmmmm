@@ -31,6 +31,10 @@ export const ThreadList: FC = () => {
       const token = localStorage.getItem('auth_token')
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
       const response = await fetch(`/api/chats?page=${pageNum}&limit=20`, { headers });
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
       if (response.ok) {
         const data = await response.json();
         if (append) {
@@ -68,6 +72,10 @@ export const ThreadList: FC = () => {
       const token = localStorage.getItem('auth_token')
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
       const res = await fetch(`/api/chats?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers });
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
       if (res.ok || res.status === 204) {
         setChats((prev) => prev.filter((c) => c.id !== id));
       }
@@ -86,6 +94,10 @@ export const ThreadList: FC = () => {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       }
       const res = await fetch(`/api/chats`, { method: 'PATCH', headers, body: JSON.stringify({ id, title }) });
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
       if (res.ok || res.status === 204) {
         setChats((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
       }
@@ -104,6 +116,10 @@ export const ThreadList: FC = () => {
       const token = localStorage.getItem('auth_token')
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
       const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { headers });
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data.results || []);

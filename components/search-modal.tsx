@@ -37,6 +37,11 @@ export function SearchModal({ open, onOpenChange, onChatSelect }: SearchModalPro
         const token = localStorage.getItem('auth_token')
         const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
         const response = await fetch('/api/chats?page=1&limit=50', { headers })
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        if (!response.ok) return;
         const data = await response.json()
         const formattedChats = data.chats.map((chat: any) => ({
           id: chat.id,
@@ -63,6 +68,11 @@ export function SearchModal({ open, onOpenChange, onChatSelect }: SearchModalPro
         const token = localStorage.getItem('auth_token')
         const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
         const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`, { headers })
+        if (response.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        if (!response.ok) return;
         const data = await response.json()
         const formattedResults = data.results.map((chat: any) => ({
           id: chat.id,

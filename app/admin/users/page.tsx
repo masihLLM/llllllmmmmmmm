@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +16,7 @@ type UserRow = {
 const ROLES: UserRow["role"][] = ["PENDING", "USER", "ADMIN"];
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,6 +26,10 @@ export default function AdminUsersPage() {
     setError("");
     try {
       const res = await fetch("/api/users", { credentials: "include" });
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         setError(j?.error || "خطا در دریافت کاربران");
@@ -55,6 +61,10 @@ export default function AdminUsersPage() {
         credentials: "include",
         body: JSON.stringify({ role: next }),
       });
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         setError(j?.error || "خطا در تغییر نقش");

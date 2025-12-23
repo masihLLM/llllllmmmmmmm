@@ -25,6 +25,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         const token = localStorage.getItem('auth_token')
         const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
         const res = await fetch('/api/settings', { headers });
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           setOpenaiBaseUrl(data?.openaiBaseUrl ?? "");
@@ -51,6 +55,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         headers,
         body: JSON.stringify({ openaiBaseUrl, openaiApiKey: openaiApiKey || undefined, postgresUrl })
       });
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       if (!res.ok) throw new Error('Failed to save');
       onOpenChange(false);
     } catch (e) {

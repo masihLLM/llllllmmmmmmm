@@ -42,6 +42,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const fetchMe = async () => {
       try {
         const res = await fetch("/api/auth/me", { credentials: "include" })
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
         if (res.ok) {
           const data = await res.json()
           setMe(data)
@@ -53,7 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     }
     fetchMe()
-  }, [])
+  }, [router])
 
   const handleSettings = () => {
     if (typeof window !== "undefined") {
