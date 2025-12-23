@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type UserRow = {
@@ -9,6 +11,8 @@ type UserRow = {
   role: string;
   createdAt: string;
 };
+
+const ROLES: UserRow["role"][] = ["PENDING", "USER", "ADMIN"];
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -41,24 +45,60 @@ export default function AdminUsersPage() {
     load();
   }, []);
 
+  const toggleRole = async (id: string, role: string) => {
+    const idx = ROLES.indexOf(role as any);
+    const next = ROLES[(idx + 1) % ROLES.length];
+    try {
+      const res = await fetch(`/api/users/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ role: next }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setError(j?.error || "خطا در تغییر نقش");
+        return;
+      }
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: next } : u)));
+    } catch (e) {
+      console.error(e);
+      setError("خطا در تغییر نقش");
+    }
+  };
+
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-4" dir="rtl">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">کاربران</h1>
-          <p className="text-sm text-muted-foreground">فقط ادمین می‌تواند کاربران را مشاهده کند.</p>
+          <p className="text-sm text-muted-foreground">
+            فقط ادمین می‌تواند کاربران را مشاهده و نقش آن‌ها را تغییر دهد.
+          </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          {loading ? "در حال بارگذاری..." : "بروزرسانی"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            {loading ? "در حال بارگذاری..." : "بروزرسانی"}
+          </Button>
+          <Link href="/chat">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              بازگشت به چت
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>}
+      {error && (
+        <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+          {error}
+        </div>
+      )}
 
       <div className="rounded-lg border bg-card">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-muted/50 text-left">
+            <thead className="bg-muted/50 text-right">
               <tr>
                 <th className="px-4 py-3 font-semibold">ایمیل</th>
                 <th className="px-4 py-3 font-semibold">نقش</th>
@@ -74,16 +114,21 @@ export default function AdminUsersPage() {
                 </tr>
               )}
               {users.map((u) => (
-                <tr key={u.id} className="border-t">
+                <tr key={u.id} className="border-t text-right">
                   <td className="px-4 py-3">{u.email}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className="inline-flex items-center rounded-full border px-3 py-1 text-xs"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="inline-flex items-center rounded-full px-3 py-1 text-xs"
+                      onClick={() => toggleRole(u.id, u.role)}
                     >
                       {u.role}
-                    </span>
+                    </Button>
                   </td>
-                  <td className="px-4 py-3">{new Date(u.createdAt).toLocaleString("fa-IR")}</td>
+                  <td className="px-4 py-3">
+                    {new Date(u.createdAt).toLocaleString("fa-IR")}
+                  </td>
                 </tr>
               ))}
             </tbody>

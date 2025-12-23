@@ -44,13 +44,18 @@ function ChatPageInner() {
     }
   }, [router]);
 
-  // Open settings if query param exists
+  // Open settings when sidebar dropdown dispatches custom event
   useEffect(() => {
-    const openSettings = searchParams?.get("settings");
-    if (openSettings) {
-      setSettingsOpen(true);
+    const handler = () => setSettingsOpen(true);
+    if (typeof window !== "undefined") {
+      window.addEventListener("app-open-settings", handler);
     }
-  }, [searchParams]);
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("app-open-settings", handler);
+      }
+    };
+  }, []);
 
   const handleSubmit = useCallback(
     async (prompt: string) => {

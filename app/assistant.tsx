@@ -53,6 +53,19 @@ export const Assistant = ({
       router.push('/login');
     }
   }, [router]);
+
+  // Listen for global settings open event from sidebar dropdown
+  React.useEffect(() => {
+    const handler = () => setSettingsOpen(true);
+    if (typeof window !== "undefined") {
+      window.addEventListener("app-open-settings", handler);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("app-open-settings", handler);
+      }
+    };
+  }, []);
   
   // Update currentChatId when propChatId changes (but only if it's a new chatId)
   React.useEffect(() => {

@@ -56,7 +56,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [])
 
   const handleSettings = () => {
-    router.push("/chat?settings=1")
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("app-open-settings"))
+    }
   }
 
   const handleAdmin = () => {
@@ -112,16 +114,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span className="text-sm font-semibold leading-tight">
                     {me?.email || (loading ? "در حال بارگذاری..." : "مهمان")}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {me?.role ? `نقش: ${me.role}` : ""}
-                  </span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
               side="top"
-              className={cn("w-64")}
+              sideOffset={6}
+              className={cn("w-64 mt-1")}
             >
               <DropdownMenuLabel className="flex items-center gap-2">
                 <User className="h-4 w-4" />
