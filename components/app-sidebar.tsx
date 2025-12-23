@@ -112,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="flex flex-col items-start text-left">
                   <span className="text-sm font-semibold leading-tight">
-                    {me?.email || (loading ? "در حال بارگذاری..." : "مهمان")}
+                    {me?.email || (loading ? "در حال بارگذاری..." : "")}
                   </span>
                 </div>
               </Button>
@@ -125,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <DropdownMenuLabel className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                {me?.email || "مهمان"}
+                {me?.email || ""}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSettings} className="cursor-pointer">
