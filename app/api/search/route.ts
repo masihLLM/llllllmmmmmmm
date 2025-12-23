@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
+import { requireAuth } from '@/lib/auth/auth';
 
-export async function GET(request: Request) {
+export const GET = requireAuth(async (request, user) => {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q');
 
@@ -10,8 +11,10 @@ export async function GET(request: Request) {
 
   try {
     // Search in chat titles (SQLite doesn't support case-insensitive search natively)
+    // Filter by userId
     const titleResults = await prisma.chat.findMany({
       where: {
+        userId: user.id,
         title: {
           contains: query,
         },
@@ -26,11 +29,14 @@ export async function GET(request: Request) {
       take: 10,
     });
 
-    // Search in message content
+    // Search in message content (only in user's chats)
     const messageResults = await prisma.message.findMany({
       where: {
         content: {
           contains: query,
+        },
+        chat: {
+          userId: user.id,
         },
       },
       include: {
@@ -59,4 +65,4 @@ export async function GET(request: Request) {
     console.error('Search failed:', error);
     return Response.json({ results: [] }, { status: 500 });
   }
-}
+});

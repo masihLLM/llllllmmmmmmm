@@ -4,6 +4,8 @@ import * as React from "react";
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { UIMessage } from "ai";
+import { getToken } from "@/lib/auth/client";
+import { useRouter } from "next/navigation";
 import {
   SidebarInset,
   SidebarProvider,
@@ -27,7 +29,6 @@ import { Settings } from "lucide-react";
 import { SettingsModal } from "@/components/settings-modal";
 import { ArtifactProvider, useArtifacts } from "@/lib/contexts/artifact-context";
 import { ArtifactPane } from "@/components/artifacts/artifact-pane";
-import { useRouter } from "next/navigation";
 import { ConversationThread } from "@/components/assistant-ui/big-thread-migration/conversation-thread";
 
 export const Assistant = ({ 
@@ -44,6 +45,14 @@ export const Assistant = ({
   const [currentChatId, setCurrentChatId] = React.useState<string | undefined>(propChatId);
   const router = useRouter();
   const [pendingStarter, setPendingStarter] = React.useState<string | null>(starterPrompt ?? null);
+
+  // Check authentication
+  React.useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
   
   // Update currentChatId when propChatId changes (but only if it's a new chatId)
   React.useEffect(() => {

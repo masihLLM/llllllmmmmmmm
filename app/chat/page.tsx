@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Settings } from "lucide-react";
+import { getToken } from "@/lib/auth/client";
 
 import { StarterThread } from "@/components/assistant-ui/big-thread-migration/starter-thread";
 import {
@@ -34,6 +35,14 @@ export default function ChatPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Check authentication
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
+
   const handleSubmit = useCallback(
     async (prompt: string) => {
       if (isSubmitting) return;
@@ -41,7 +50,24 @@ export default function ChatPage() {
       setSubmitError(null);
 
       try {
-        const response = await fetch("/api/chat/create", { method: "POST" });
+        const token = getToken();
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        const response = await fetch("/api/chat/create", {
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        
         if (!response.ok) {
           throw new Error("Failed to create chat");
         }

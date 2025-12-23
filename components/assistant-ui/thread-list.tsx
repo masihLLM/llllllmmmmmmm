@@ -28,7 +28,9 @@ export const ThreadList: FC = () => {
 
   const loadChatHistory = async (pageNum: number = 1, append: boolean = false) => {
     try {
-      const response = await fetch(`/api/chats?page=${pageNum}&limit=20`);
+      const token = localStorage.getItem('auth_token')
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+      const response = await fetch(`/api/chats?page=${pageNum}&limit=20`, { headers });
       if (response.ok) {
         const data = await response.json();
         if (append) {
@@ -63,7 +65,9 @@ export const ThreadList: FC = () => {
 
   const handleDeleteChat = async (id: string) => {
     try {
-      const res = await fetch(`/api/chats?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const token = localStorage.getItem('auth_token')
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+      const res = await fetch(`/api/chats?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers });
       if (res.ok || res.status === 204) {
         setChats((prev) => prev.filter((c) => c.id !== id));
       }
@@ -76,7 +80,12 @@ export const ThreadList: FC = () => {
     const title = prompt('Rename chat to:');
     if (!title) return;
     try {
-      const res = await fetch(`/api/chats`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, title }) });
+      const token = localStorage.getItem('auth_token')
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+      const res = await fetch(`/api/chats`, { method: 'PATCH', headers, body: JSON.stringify({ id, title }) });
       if (res.ok || res.status === 204) {
         setChats((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
       }
@@ -92,7 +101,9 @@ export const ThreadList: FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const token = localStorage.getItem('auth_token')
+      const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { headers });
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data.results || []);

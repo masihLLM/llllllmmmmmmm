@@ -34,7 +34,9 @@ export function SearchModal({ open, onOpenChange, onChatSelect }: SearchModalPro
   React.useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await fetch('/api/chats?page=1&limit=50')
+        const token = localStorage.getItem('auth_token')
+        const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+        const response = await fetch('/api/chats?page=1&limit=50', { headers })
         const data = await response.json()
         const formattedChats = data.chats.map((chat: any) => ({
           id: chat.id,
@@ -58,7 +60,9 @@ export function SearchModal({ open, onOpenChange, onChatSelect }: SearchModalPro
     const searchChats = async () => {
       setLoading(true)
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+        const token = localStorage.getItem('auth_token')
+        const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`, { headers })
         const data = await response.json()
         const formattedResults = data.results.map((chat: any) => ({
           id: chat.id,

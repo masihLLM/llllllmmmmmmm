@@ -14,6 +14,8 @@ import {
 import { loadChat, saveChat, createChat } from '@/lib/db';
 import { rdbmsTools } from '@/lib/rdbms/tools';
 import { rdbmsWriteTools } from '@/lib/rdbms/tools_write';
+import { requireAuth } from '@/lib/auth/auth';
+import { prisma } from '@/lib/db';
 
 const tools = { ...rdbmsTools, ...rdbmsWriteTools } as const;
 
@@ -26,7 +28,7 @@ import { getEffectiveOpenAIConfig } from '@/lib/services/settings';
 const openai = createOpenAI();
 
 // GET handler for resuming streams
-export async function GET(request: Request) {
+export const GET = requireAuth(async (request, user) => {
   const { searchParams } = new URL(request.url);
   const chatId = searchParams.get('chatId');
 
@@ -35,15 +37,29 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Verify chat belongs to user
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+      select: { userId: true },
+    });
+
+    if (!chat) {
+      return new Response('Chat not found', { status: 404 });
+    }
+
+    if (chat.userId && chat.userId !== user.id) {
+      return new Response('Forbidden', { status: 403 });
+    }
+
     const messages = await loadChat(chatId);
     return Response.json({ messages });
   } catch (error) {
     console.error('❌ API GET: Failed to load chat:', error);
     return new Response('Chat not found', { status: 404 });
   }
-}
+});
 
-export async function POST(req: Request) {
+export const POST = requireAuth(async (req, user) => {
   const body = await req.json();
   const messages = (body?.messages ?? []) as ChatMessage[];
   const chatId = (body?.id ?? body?.chatId) as string | undefined;
@@ -57,7 +73,7 @@ export async function POST(req: Request) {
   if (!chatId) {
     // No chatId provided - create a new chat
     try {
-      currentChatId = await createChat();
+      currentChatId = await createChat(user.id);
       isNewChat = true;
       console.log('📝 API: Created new chat with ID:', currentChatId);
     } catch (error) {
@@ -65,22 +81,36 @@ export async function POST(req: Request) {
       return new Response('Failed to create chat', { status: 500 });
     }
   } else {
-    // ChatId provided - verify it exists in database
+    // ChatId provided - verify it exists and belongs to user
     try {
-      await loadChat(chatId);
-      currentChatId = chatId;
-      console.log('📝 API: Using existing chat with ID:', currentChatId);
-    } catch (error) {
-      // ChatId provided but doesn't exist - create a new chat instead
-      console.log('⚠️ API: Provided chatId does not exist, creating new chat');
-      try {
-        currentChatId = await createChat();
-        isNewChat = true;
-        console.log('📝 API: Created new chat with ID:', currentChatId);
-      } catch (createError) {
-        console.error('❌ API: Failed to create new chat:', createError);
-        return new Response('Failed to create chat', { status: 500 });
+      const chat = await prisma.chat.findUnique({
+        where: { id: chatId },
+        select: { userId: true },
+      });
+
+      if (!chat) {
+        // ChatId provided but doesn't exist - create a new chat instead
+        console.log('⚠️ API: Provided chatId does not exist, creating new chat');
+        try {
+          currentChatId = await createChat(user.id);
+          isNewChat = true;
+          console.log('📝 API: Created new chat with ID:', currentChatId);
+        } catch (createError) {
+          console.error('❌ API: Failed to create new chat:', createError);
+          return new Response('Failed to create chat', { status: 500 });
+        }
+      } else {
+        // Verify ownership
+        if (chat.userId && chat.userId !== user.id) {
+          return new Response('Forbidden', { status: 403 });
+        }
+        await loadChat(chatId);
+        currentChatId = chatId;
+        console.log('📝 API: Using existing chat with ID:', currentChatId);
       }
+    } catch (error) {
+      console.error('❌ API: Error verifying chat:', error);
+      return new Response('Failed to verify chat', { status: 500 });
     }
   }
 
@@ -176,4 +206,4 @@ Write clear, efficient SQL (CTEs when helpful), use ILIKE for fuzzy text filters
   }
 
   return response;
-}
+});

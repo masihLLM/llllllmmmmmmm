@@ -48,8 +48,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Github className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">IA.AI </span>
-                  <span className="">BUILD WITH Try AND ❤</span>
+                  <span className="font-semibold">AGI</span>
+                  <span className="">BUILD WITH GOD AND ❤</span>
                 </div>
               </Link>
             </SidebarMenuButton>
