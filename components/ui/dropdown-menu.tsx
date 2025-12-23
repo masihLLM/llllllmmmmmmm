@@ -38,4 +38,30 @@ export const DropdownMenuItem = React.forwardRef<
   );
 });
 
+export const DropdownMenuSeparator = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
+>(function DropdownMenuSeparator({ className, ...props }, ref) {
+  return (
+    <DropdownMenuPrimitive.Separator
+      ref={ref}
+      className={"my-1 h-px bg-muted " + (className ?? "")}
+      {...props}
+    />
+  );
+});
+
+export const DropdownMenuLabel = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label>
+>(function DropdownMenuLabel({ className, ...props }, ref) {
+  return (
+    <DropdownMenuPrimitive.Label
+      ref={ref}
+      className={"px-2 py-1.5 text-xs font-semibold text-muted-foreground " + (className ?? "")}
+      {...props}
+    />
+  );
+});
+
 

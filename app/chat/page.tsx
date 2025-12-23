@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Settings } from "lucide-react";
 import { getToken } from "@/lib/auth/client";
 
@@ -28,8 +28,9 @@ import { SettingsModal } from "@/components/settings-modal";
 
 export const dynamic = "force-dynamic";
 
-export default function ChatPage() {
+function ChatPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +43,14 @@ export default function ChatPage() {
       router.push('/login');
     }
   }, [router]);
+
+  // Open settings if query param exists
+  useEffect(() => {
+    const openSettings = searchParams?.get("settings");
+    if (openSettings) {
+      setSettingsOpen(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = useCallback(
     async (prompt: string) => {
@@ -152,5 +161,13 @@ export default function ChatPage() {
       />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">در حال بارگذاری...</div>}>
+      <ChatPageInner />
+    </Suspense>
   );
 }
