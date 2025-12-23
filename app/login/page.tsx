@@ -22,28 +22,77 @@ export default function LoginPage() {
   const [checkingUsers, setCheckingUsers] = useState(true);
 
   useEffect(() => {
-    // Check if already logged in
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      router.push("/chat");
-      return;
-    }
+    // Validate token before redirecting
+    const validateAndRedirect = async () => {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        // No token, proceed with normal flow
+        const checkUsers = async () => {
+          try {
+            const response = await fetch("/api/auth/check-users");
+            const data = await response.json();
+            setIsInitialAdmin(!data.hasUsers);
+          } catch (error) {
+            console.error("Error checking users:", error);
+            setIsInitialAdmin(false);
+          } finally {
+            setCheckingUsers(false);
+          }
+        };
+        checkUsers();
+        return;
+      }
 
-    // Check if any users exist
-    const checkUsers = async () => {
+      // Token exists, validate it
       try {
-        const response = await fetch("/api/auth/check-users");
-        const data = await response.json();
-        setIsInitialAdmin(!data.hasUsers);
+        const response = await fetch("/api/auth/me", {
+          credentials: "include",
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          // Token is valid, redirect to chat
+          router.push("/chat");
+        } else {
+          // Token is invalid, clear it and proceed with login
+          localStorage.removeItem("auth_token");
+          const checkUsers = async () => {
+            try {
+              const response = await fetch("/api/auth/check-users");
+              const data = await response.json();
+              setIsInitialAdmin(!data.hasUsers);
+            } catch (error) {
+              console.error("Error checking users:", error);
+              setIsInitialAdmin(false);
+            } finally {
+              setCheckingUsers(false);
+            }
+          };
+          checkUsers();
+        }
       } catch (error) {
-        console.error("Error checking users:", error);
-        setIsInitialAdmin(false);
-      } finally {
-        setCheckingUsers(false);
+        // Network error, clear token and proceed with login
+        console.error("Error validating token:", error);
+        localStorage.removeItem("auth_token");
+        const checkUsers = async () => {
+          try {
+            const response = await fetch("/api/auth/check-users");
+            const data = await response.json();
+            setIsInitialAdmin(!data.hasUsers);
+          } catch (error) {
+            console.error("Error checking users:", error);
+            setIsInitialAdmin(false);
+          } finally {
+            setCheckingUsers(false);
+          }
+        };
+        checkUsers();
       }
     };
 
-    checkUsers();
+    validateAndRedirect();
   }, [router]);
 
   const handleEmailNext = () => {

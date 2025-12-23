@@ -78,6 +78,8 @@ function ChatPageInner() {
         });
         
         if (response.status === 401) {
+          // Clear invalid token and redirect to login
+          localStorage.removeItem("auth_token");
           router.push('/login');
           return;
         }

@@ -43,6 +43,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       try {
         const res = await fetch("/api/auth/me", { credentials: "include" })
         if (res.status === 401) {
+          // Clear invalid token and redirect to login
+          localStorage.removeItem("auth_token");
           router.push('/login');
           return;
         }

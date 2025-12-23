@@ -26,6 +26,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
         const res = await fetch('/api/settings', { headers });
         if (res.status === 401) {
+          // Clear invalid token and redirect to login
+          localStorage.removeItem("auth_token");
           window.location.href = '/login';
           return;
         }
@@ -56,6 +58,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         body: JSON.stringify({ openaiBaseUrl, openaiApiKey: openaiApiKey || undefined, postgresUrl })
       });
       if (res.status === 401) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem("auth_token");
         window.location.href = '/login';
         return;
       }

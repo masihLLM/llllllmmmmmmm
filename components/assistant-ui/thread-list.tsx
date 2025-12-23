@@ -32,6 +32,8 @@ export const ThreadList: FC = () => {
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
       const response = await fetch(`/api/chats?page=${pageNum}&limit=20`, { headers });
       if (response.status === 401) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem("auth_token");
         router.push('/login');
         return;
       }
@@ -73,6 +75,8 @@ export const ThreadList: FC = () => {
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
       const res = await fetch(`/api/chats?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers });
       if (res.status === 401) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem("auth_token");
         router.push('/login');
         return;
       }
@@ -95,6 +99,8 @@ export const ThreadList: FC = () => {
       }
       const res = await fetch(`/api/chats`, { method: 'PATCH', headers, body: JSON.stringify({ id, title }) });
       if (res.status === 401) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem("auth_token");
         router.push('/login');
         return;
       }
@@ -117,6 +123,8 @@ export const ThreadList: FC = () => {
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {}
       const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { headers });
       if (response.status === 401) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem("auth_token");
         router.push('/login');
         return;
       }
