@@ -3,7 +3,7 @@ FROM node:18-bullseye AS deps
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci  --include=dev --no-audit --no-fund 
 
 FROM node:18-bullseye AS builder
 WORKDIR /app
