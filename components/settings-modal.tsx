@@ -17,6 +17,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
   const [openaiApiKey, setOpenaiApiKey] = React.useState("");
   const [hasOpenaiApiKey, setHasOpenaiApiKey] = React.useState(false);
   const [postgresUrl, setPostgresUrl] = React.useState("");
+  const [mssqlUrl, setMssqlUrl] = React.useState("");
 
   React.useEffect(() => {
     if (!open) return;
@@ -37,6 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
           setHasOpenaiApiKey(!!data?.hasOpenaiApiKey);
           setOpenaiApiKey("");
           setPostgresUrl(data?.postgresUrl ?? "");
+          setMssqlUrl(data?.mssqlUrl ?? "");
         }
       } catch (e) {
         console.error('Failed to load settings', e);
@@ -55,7 +57,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
       const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers,
-        body: JSON.stringify({ openaiBaseUrl, openaiApiKey: openaiApiKey || undefined, postgresUrl })
+        body: JSON.stringify({ openaiBaseUrl, openaiApiKey: openaiApiKey || undefined, postgresUrl, mssqlUrl })
       });
       if (res.status === 401) {
         // Clear invalid token and redirect to login
@@ -95,6 +97,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
             <div>
               <label className="block text-sm mb-1">Postgres URL</label>
               <Input value={postgresUrl} onChange={(e) => setPostgresUrl(e.target.value)} placeholder="postgres://..." />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">MSSQL URL</label>
+              <Input value={mssqlUrl} onChange={(e) => setMssqlUrl(e.target.value)} placeholder="Server=localhost;Database=mydb;User Id=user;Password=pass;" />
             </div>
             <div className="pt-2">
               <Button onClick={handleSave} disabled={loading} className="w-full">{loading ? 'Saving...' : 'Save'}</Button>

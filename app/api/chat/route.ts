@@ -14,10 +14,12 @@ import {
 import { loadChat, saveChat, createChat } from '@/lib/db';
 import { rdbmsTools } from '@/lib/rdbms/tools';
 import { rdbmsWriteTools } from '@/lib/rdbms/tools_write';
+import { mssqlTools } from '@/lib/rdbms/mssql/tools';
+import { mssqlWriteTools } from '@/lib/rdbms/mssql/tools_write';
 import { requireAuth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db';
 
-const tools = { ...rdbmsTools, ...rdbmsWriteTools } as const;
+const tools = { ...rdbmsTools, ...rdbmsWriteTools, ...mssqlTools, ...mssqlWriteTools } as const;
 
 export type ChatTools = InferUITools<typeof tools>;
 
@@ -156,12 +158,22 @@ export const POST = requireAuth(async (req, user) => {
     messages: convertToModelMessages(validatedMessages),
     stopWhen: stepCountIs(5),
     tools,
-    system: `You are AfzlAI, an expert RDBMS assistant for PostgreSQL. You can: list schemas, list tables, inspect columns, run read-only SQL, and perform limited write operations via tools that require confirm=true.
+    system: `You are AfzlAI, an expert RDBMS assistant supporting both PostgreSQL and Microsoft SQL Server (MSSQL). You can: list schemas, list tables, inspect columns, run read-only SQL, and perform limited write operations via tools that require confirm=true.
+
+For PostgreSQL, use tools: listSchemas, listTables, listColumns, runReadOnlySQL, createTable, createIndex, createView, dropObject, insertRows, updateRows, deleteRows.
+For MSSQL, use tools: listSchemasMssql, listTablesMssql, listColumnsMssql, runReadOnlySQLMssql, createTableMssql, createIndexMssql, createViewMssql, dropObjectMssql, insertRowsMssql, updateRowsMssql, deleteRowsMssql.
+
+When the user mentions PostgreSQL, Postgres, or pg, use PostgreSQL tools. When the user mentions MSSQL, SQL Server, Microsoft SQL, or SQL Server, use MSSQL tools. If the user doesn't specify, you can ask which database they want to use, or infer from context.
+
 Prefer safe analytics (SELECT/CTE). Before any write, explain what you will change and require confirm=true in the tool input. When the user asks a question, decide whether to:
-1) inspect metadata with listSchemas/listTables/listColumns, or
-2) run a read-only query with runReadOnlySQL, or
-3) if explicitly requested, propose a write tool call (createTable/createIndex/createView/dropObject/insertRows/updateRows/deleteRows) with confirm=false and ask the user to resubmit with confirm=true.
-Write clear, efficient SQL (CTEs when helpful), use ILIKE for fuzzy text filters, qualify tables with schema when ambiguous, and return results that are easy to visualize (include at least two columns when possible). If something is missing, ask a concise clarifying question.`,
+1) inspect metadata with listSchemas/listTables/listColumns (or their MSSQL equivalents), or
+2) run a read-only query with runReadOnlySQL (or runReadOnlySQLMssql), or
+3) if explicitly requested, propose a write tool call with confirm=false and ask the user to resubmit with confirm=true.
+
+For PostgreSQL: Write clear, efficient SQL (CTEs when helpful), use ILIKE for fuzzy text filters, qualify tables with schema when ambiguous.
+For MSSQL: Write clear, efficient SQL (CTEs when helpful), use LIKE for case-insensitive text filters (or COLLATE for case-insensitive), qualify tables with schema when ambiguous.
+
+Return results that are easy to visualize (include at least two columns when possible). If something is missing, ask a concise clarifying question.`,
   });
 
   // ensure stream runs to completion even if client aborts

@@ -14,8 +14,8 @@ export const GET = requireRole(['ADMIN'])(async () => {
 export const PATCH = requireRole(['ADMIN'])(async (request) => {
   try {
     const body = await request.json();
-    const { openaiBaseUrl, openaiApiKey, postgresUrl } = body ?? {};
-    await updateSettings({ openaiBaseUrl, openaiApiKey, postgresUrl });
+    const { openaiBaseUrl, openaiApiKey, postgresUrl, mssqlUrl } = body ?? {};
+    await updateSettings({ openaiBaseUrl, openaiApiKey, postgresUrl, mssqlUrl });
     const dto = await getSettingsDTO();
     return Response.json(dto);
   } catch (e) {

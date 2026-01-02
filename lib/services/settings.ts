@@ -3,11 +3,12 @@ import { prisma } from "@/lib/db";
 export interface SettingsDTO {
   openaiBaseUrl: string | null;
   postgresUrl: string | null;
+  mssqlUrl: string | null;
   hasOpenaiApiKey: boolean;
 }
 
 // In-memory settings snapshot. Loaded once and kept fresh on updates.
-let memorySettings: { openaiBaseUrl: string | null; openaiApiKey: string | null; postgresUrl: string | null } | null = null;
+let memorySettings: { openaiBaseUrl: string | null; openaiApiKey: string | null; postgresUrl: string | null; mssqlUrl: string | null } | null = null;
 let initialized = false;
 
 async function ensureLoaded() {
@@ -17,6 +18,7 @@ async function ensureLoaded() {
     openaiBaseUrl: row?.openaiBaseUrl ?? null,
     openaiApiKey: row?.openaiApiKey ?? null,
     postgresUrl: row?.postgresUrl ?? null,
+    mssqlUrl: row?.mssqlUrl ?? null,
   };
   initialized = true;
 }
@@ -31,15 +33,17 @@ export async function getSettingsDTO(): Promise<SettingsDTO> {
   return {
     openaiBaseUrl: raw.openaiBaseUrl,
     postgresUrl: raw.postgresUrl,
+    mssqlUrl: raw.mssqlUrl,
     hasOpenaiApiKey: !!(raw.openaiApiKey && raw.openaiApiKey.length > 0),
   };
 }
 
-export async function updateSettings(partial: { openaiBaseUrl?: string; openaiApiKey?: string; postgresUrl?: string }) {
+export async function updateSettings(partial: { openaiBaseUrl?: string; openaiApiKey?: string; postgresUrl?: string; mssqlUrl?: string }) {
   const data: any = {};
   if (typeof partial.openaiBaseUrl !== 'undefined') data.openaiBaseUrl = nullableString(partial.openaiBaseUrl);
   if (typeof partial.openaiApiKey !== 'undefined') data.openaiApiKey = nullableString(partial.openaiApiKey);
   if (typeof partial.postgresUrl !== 'undefined') data.postgresUrl = nullableString(partial.postgresUrl);
+  if (typeof partial.mssqlUrl !== 'undefined') data.mssqlUrl = nullableString(partial.mssqlUrl);
 
   const updated = await prisma.appSettings.upsert({
     where: { id: 1 },
@@ -50,6 +54,7 @@ export async function updateSettings(partial: { openaiBaseUrl?: string; openaiAp
     openaiBaseUrl: updated.openaiBaseUrl ?? null,
     openaiApiKey: updated.openaiApiKey ?? null,
     postgresUrl: updated.postgresUrl ?? null,
+    mssqlUrl: updated.mssqlUrl ?? null,
   };
   initialized = true;
   return updated;
@@ -72,6 +77,13 @@ export async function getEffectivePostgresUrl(): Promise<string> {
   await ensureLoaded();
   const url = (memorySettings?.postgresUrl ?? null) ?? process.env.POSTGRES_URL;
   if (!url) throw new Error("POSTGRES_URL not configured in settings or env");
+  return url;
+}
+
+export async function getEffectiveMssqlUrl(): Promise<string> {
+  await ensureLoaded();
+  const url = (memorySettings?.mssqlUrl ?? null) ?? process.env.MSSQL_URL;
+  if (!url) throw new Error("MSSQL_URL not configured in settings or env");
   return url;
 }
 

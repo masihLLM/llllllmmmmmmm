@@ -54,6 +54,7 @@ model AppSettings {
   openaiBaseUrl String?
   openaiApiKey  String?
   postgresUrl   String?
+  mssqlUrl      String?
   updatedAt     DateTime @updatedAt
 
   @@map("app_settings")
