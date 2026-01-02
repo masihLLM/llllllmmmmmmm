@@ -6,7 +6,7 @@ const confirmSchema = z.object({ confirm: z.literal(true).describe("You must set
 
 export const rdbmsWriteTools = {
   createTable: tool({
-    description: "Create a table with provided DDL. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Create a table with provided DDL in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use createTableMssql instead.",
     inputSchema: confirmSchema.extend({ ddl: z.string().describe("CREATE TABLE ... statement") }),
     execute: async ({ ddl }) => {
       await executeUnsafeSQL({ sql: ddl });
@@ -14,7 +14,7 @@ export const rdbmsWriteTools = {
     },
   }),
   createIndex: tool({
-    description: "Create an index. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Create an index in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use createIndexMssql instead.",
     inputSchema: confirmSchema.extend({ ddl: z.string().describe("CREATE INDEX ... statement") }),
     execute: async ({ ddl }) => {
       await executeUnsafeSQL({ sql: ddl });
@@ -22,7 +22,7 @@ export const rdbmsWriteTools = {
     },
   }),
   createView: tool({
-    description: "Create a view. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Create a view in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use createViewMssql instead.",
     inputSchema: confirmSchema.extend({ ddl: z.string().describe("CREATE VIEW ... AS SELECT ...") }),
     execute: async ({ ddl }) => {
       await executeUnsafeSQL({ sql: ddl });
@@ -30,7 +30,7 @@ export const rdbmsWriteTools = {
     },
   }),
   dropObject: tool({
-    description: "Drop a table/index/view/schema object. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Drop a table/index/view/schema object in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use dropObjectMssql instead.",
     inputSchema: confirmSchema.extend({ ddl: z.string().describe("DROP TABLE/INDEX/VIEW ...") }),
     execute: async ({ ddl }) => {
       await executeUnsafeSQL({ sql: ddl });
@@ -38,7 +38,7 @@ export const rdbmsWriteTools = {
     },
   }),
   insertRows: tool({
-    description: "Insert rows via explicit INSERT statement. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Insert rows via explicit INSERT statement in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use insertRowsMssql instead.",
     inputSchema: confirmSchema.extend({ sql: z.string().describe("INSERT INTO ... VALUES ...") }),
     execute: async ({ sql }) => {
       const rows = await executeUnsafeSQL({ sql });
@@ -46,7 +46,7 @@ export const rdbmsWriteTools = {
     },
   }),
   updateRows: tool({
-    description: "Update rows via explicit UPDATE statement. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Update rows via explicit UPDATE statement in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use updateRowsMssql instead.",
     inputSchema: confirmSchema.extend({ sql: z.string().describe("UPDATE ... SET ... WHERE ...") }),
     execute: async ({ sql }) => {
       const rows = await executeUnsafeSQL({ sql });
@@ -54,7 +54,7 @@ export const rdbmsWriteTools = {
     },
   }),
   deleteRows: tool({
-    description: "Delete rows via explicit DELETE statement. Requires confirm=true.",
+    description: "ONLY FOR POSTGRESQL - Delete rows via explicit DELETE statement in PostgreSQL. Requires confirm=true. DO NOT use this for MSSQL/SQL Server - use deleteRowsMssql instead.",
     inputSchema: confirmSchema.extend({ sql: z.string().describe("DELETE FROM ... WHERE ...") }),
     execute: async ({ sql }) => {
       const rows = await executeUnsafeSQL({ sql });

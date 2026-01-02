@@ -5,7 +5,7 @@ import { listSchemas, listTables, listColumns } from "./introspection";
 
 export const rdbmsTools = {
   listSchemas: tool({
-    description: "List available schemas in the connected Postgres database.",
+    description: "ONLY FOR POSTGRESQL - List available schemas in the connected PostgreSQL database. DO NOT use this for MSSQL/SQL Server - use listSchemasMssql instead.",
     inputSchema: z.object({}),
     execute: async () => {
       const schemas = await listSchemas();
@@ -13,7 +13,7 @@ export const rdbmsTools = {
     },
   }),
   listTables: tool({
-    description: "List tables. If schema is omitted, list all schemas' tables.",
+    description: "ONLY FOR POSTGRESQL - List tables in PostgreSQL. If schema is omitted, list all schemas' tables. DO NOT use this for MSSQL/SQL Server - use listTablesMssql instead.",
     inputSchema: z.object({ schema: z.string().optional() }),
     execute: async ({ schema }) => {
       const tables = await listTables(schema);
@@ -22,7 +22,7 @@ export const rdbmsTools = {
     },
   }),
   listColumns: tool({
-    description: "List columns for a given table in a schema.",
+    description: "ONLY FOR POSTGRESQL - List columns for a given table in a schema in PostgreSQL. DO NOT use this for MSSQL/SQL Server - use listColumnsMssql instead.",
     inputSchema: z.object({ schema: z.string(), table: z.string() }),
     execute: async ({ schema, table }) => {
       const cols = await listColumns(schema, table);
@@ -33,7 +33,7 @@ export const rdbmsTools = {
     },
   }),
   runReadOnlySQL: tool({
-    description: "Execute a read-only SQL query (SELECT/CTE). Returns JSON rows.",
+    description: "ONLY FOR POSTGRESQL - Execute a read-only SQL query (SELECT/CTE) on PostgreSQL. Returns JSON rows. DO NOT use this for MSSQL/SQL Server - use runReadOnlySQLMssql instead.",
     inputSchema: z.object({ sql: z.string().describe("Read-only SQL to execute") }),
     execute: async ({ sql }) => {
       const rows = await executeReadOnlySQL({ sql });
