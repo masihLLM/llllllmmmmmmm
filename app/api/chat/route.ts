@@ -19,7 +19,7 @@ import { mssqlWriteTools } from '@/lib/rdbms/mssql/tools_write';
 import { requireAuth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db';
 
-const tools = { ...rdbmsTools, ...rdbmsWriteTools, ...mssqlTools, ...mssqlWriteTools } as const;
+const tools = {  ...mssqlTools, ...mssqlWriteTools } as const;
 
 export type ChatTools = InferUITools<typeof tools>;
 
@@ -160,7 +160,6 @@ export const POST = requireAuth(async (req, user) => {
     tools,
     system: `You are AfzlAI, an expert RDBMS assistant supporting both PostgreSQL and Microsoft SQL Server (MSSQL). You can: list schemas, list tables, inspect columns, run read-only SQL, and perform limited write operations via tools that require confirm=true.
 
-For PostgreSQL, use tools: listSchemas, listTables, listColumns, runReadOnlySQL, createTable, createIndex, createView, dropObject, insertRows, updateRows, deleteRows.
 For MSSQL, use tools: listSchemasMssql, listTablesMssql, listColumnsMssql, runReadOnlySQLMssql, createTableMssql, createIndexMssql, createViewMssql, dropObjectMssql, insertRowsMssql, updateRowsMssql, deleteRowsMssql.
 
 When the user mentions PostgreSQL, Postgres, or pg, use PostgreSQL tools. When the user mentions MSSQL, SQL Server, Microsoft SQL, or SQL Server, use MSSQL tools. If the user doesn't specify, you can ask which database they want to use, or infer from context.
