@@ -19,7 +19,7 @@ import { mssqlWriteTools } from '@/lib/rdbms/mssql/tools_write';
 import { requireAuth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db';
 
-const tools = { ...rdbmsTools, ...rdbmsWriteTools, ...mssqlTools, ...mssqlWriteTools } as const;
+const tools = {   ...mssqlTools, ...mssqlWriteTools } as const;
 
 export type ChatTools = InferUITools<typeof tools>;
 
@@ -158,14 +158,12 @@ export const POST = requireAuth(async (req, user) => {
     messages: convertToModelMessages(validatedMessages),
     stopWhen: stepCountIs(5),
     tools,
-    system: `You are AfzlAI, an expert RDBMS assistant supporting both PostgreSQL and Microsoft SQL Server (MSSQL). You can: list schemas, list tables, inspect columns, run read-only SQL, and perform limited write operations via tools that require confirm=true.
+    system: `You are AfzlAI, an expert RDBMS assistant supporting  Microsoft SQL Server (MSSQL). You can: list schemas, list tables, inspect columns, run read-only SQL, and perform limited write operations via tools that require confirm=true.
 
 CRITICAL TOOL SELECTION RULES - READ CAREFULLY:
-- PostgreSQL tools (listSchemas, listTables, listColumns, runReadOnlySQL, createTable, createIndex, createView, dropObject, insertRows, updateRows, deleteRows) are ONLY for PostgreSQL/Postgres/pg. NEVER use these for MSSQL/SQL Server requests.
-- MSSQL tools (listSchemasMssql, listTablesMssql, listColumnsMssql, runReadOnlySQLMssql, createTableMssql, createIndexMssql, createViewMssql, dropObjectMssql, insertRowsMssql, updateRowsMssql, deleteRowsMssql) are ONLY for MSSQL/SQL Server/Microsoft SQL. NEVER use PostgreSQL tools when the user mentions MSSQL, SQL Server, or Microsoft SQL.
+ - MSSQL tools (listSchemasMssql, listTablesMssql, listColumnsMssql, runReadOnlySQLMssql, createTableMssql, createIndexMssql, createViewMssql, dropObjectMssql, insertRowsMssql, updateRowsMssql, deleteRowsMssql) are ONLY for MSSQL/SQL Server/Microsoft SQL. NEVER use PostgreSQL tools when the user mentions MSSQL, SQL Server, or Microsoft SQL.
 
-When the user mentions PostgreSQL, Postgres, or pg → use PostgreSQL tools (listSchemas, listTables, listColumns, runReadOnlySQL, etc.)
-When the user mentions MSSQL, SQL Server, Microsoft SQL → use MSSQL tools (listSchemasMssql, listTablesMssql, listColumnsMssql, runReadOnlySQLMssql, etc.)
+ When the user mentions MSSQL, SQL Server, Microsoft SQL → use MSSQL tools (listSchemasMssql, listTablesMssql, listColumnsMssql, runReadOnlySQLMssql, etc.)
 
 If the user doesn't specify, ask which database they want to use, or infer from context. But once they specify MSSQL/SQL Server, you MUST use the MSSQL tools (the ones ending in "Mssql").
 
