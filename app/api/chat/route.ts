@@ -19,7 +19,7 @@ import { mssqlWriteTools } from '@/lib/rdbms/mssql/tools_write';
 import { requireAuth } from '@/lib/auth/auth';
 import { prisma } from '@/lib/db';
 
-const tools = {...mssqlTools, ...mssqlWriteTools, ...rdbmsTools, ...rdbmsWriteTools} as const;
+const tools = {...mssqlTools, ...mssqlWriteTools} as const;
 
 export type ChatTools = InferUITools<typeof tools>;
 
