@@ -5,39 +5,59 @@ import { listSchemas, listTables, listColumns } from "./introspection";
 
 export const mssqlTools = {
   listSchemasMssql: tool({
-    description: "ONLY FOR MSSQL/SQL SERVER - List available schemas in the connected Microsoft SQL Server (MSSQL) database. Use this when the user mentions MSSQL, SQL Server, or Microsoft SQL. NEVER use listSchemas (PostgreSQL tool) for MSSQL requests.",
+    description: "MSSQL ONLY. Use when user says: mssql, SQL Server, Microsoft SQL. Tool name: listSchemasMssql. NEVER use listSchemas (PostgreSQL) for MSSQL. List schemas in Microsoft SQL Server database.",
     inputSchema: z.object({}),
     execute: async () => {
-      const schemas = await listSchemas();
-      return schemas.join("\n");
+      try {
+        const schemas = await listSchemas();
+        return schemas.join("\n");
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to list MSSQL schemas: ${errorMessage}. Please verify your MSSQL_URL connection string is correct and the database is accessible.`);
+      }
     },
   }),
   listTablesMssql: tool({
-    description: "ONLY FOR MSSQL/SQL SERVER - List tables in Microsoft SQL Server (MSSQL). If schema is omitted, list all schemas' tables. Use this when the user mentions MSSQL, SQL Server, or Microsoft SQL. NEVER use listTables (PostgreSQL tool) for MSSQL requests.",
+    description: "MSSQL ONLY. Use when user says: mssql, SQL Server, Microsoft SQL. Tool name: listTablesMssql. NEVER use listTables (PostgreSQL) for MSSQL. List tables in MSSQL. If schema omitted, list all schemas' tables.",
     inputSchema: z.object({ schema: z.string().optional() }),
     execute: async ({ schema }) => {
-      const tables = await listTables(schema);
-      if (!tables.length) return "No tables found.";
-      return tables.map((t) => `${t.schema}.${t.name}`).join("\n");
+      try {
+        const tables = await listTables(schema);
+        if (!tables.length) return "No tables found.";
+        return tables.map((t) => `${t.schema}.${t.name}`).join("\n");
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to list MSSQL tables: ${errorMessage}. Please verify your MSSQL_URL connection string is correct and the database is accessible.`);
+      }
     },
   }),
   listColumnsMssql: tool({
-    description: "ONLY FOR MSSQL/SQL SERVER - List columns for a given table in a schema in Microsoft SQL Server (MSSQL). Use this when the user mentions MSSQL, SQL Server, or Microsoft SQL. NEVER use listColumns (PostgreSQL tool) for MSSQL requests.",
+    description: "MSSQL ONLY. Use when user says: mssql, SQL Server, Microsoft SQL. Tool name: listColumnsMssql. NEVER use listColumns (PostgreSQL) for MSSQL. List columns for a table in MSSQL schema.",
     inputSchema: z.object({ schema: z.string(), table: z.string() }),
     execute: async ({ schema, table }) => {
-      const cols = await listColumns(schema, table);
-      if (!cols.length) return "No columns found.";
-      return cols
-        .map((c) => `${c.tableSchema}.${c.tableName}.${c.columnName} ${c.dataType} ${c.isNullable ? "nullable" : "not null"}${c.isPrimaryKey ? " pk" : ""}`)
-        .join("\n");
+      try {
+        const cols = await listColumns(schema, table);
+        if (!cols.length) return "No columns found.";
+        return cols
+          .map((c) => `${c.tableSchema}.${c.tableName}.${c.columnName} ${c.dataType} ${c.isNullable ? "nullable" : "not null"}${c.isPrimaryKey ? " pk" : ""}`)
+          .join("\n");
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to list MSSQL columns: ${errorMessage}. Please verify your MSSQL_URL connection string is correct and the database is accessible.`);
+      }
     },
   }),
   runReadOnlySQLMssql: tool({
-    description: "ONLY FOR MSSQL/SQL SERVER - Execute a read-only SQL query (SELECT/CTE) on Microsoft SQL Server (MSSQL). Returns JSON rows. Use this when the user mentions MSSQL, SQL Server, or Microsoft SQL. NEVER use runReadOnlySQL (PostgreSQL tool) for MSSQL requests.",
+    description: "MSSQL ONLY. Use when user says: mssql, SQL Server, Microsoft SQL. Tool name: runReadOnlySQLMssql. NEVER use runReadOnlySQL (PostgreSQL) for MSSQL. Execute SELECT/CTE query on MSSQL. Returns JSON rows.",
     inputSchema: z.object({ sql: z.string().describe("Read-only SQL to execute") }),
     execute: async ({ sql }) => {
-      const rows = await executeReadOnlySQL({ sql });
-      return JSON.stringify(rows);
+      try {
+        const rows = await executeReadOnlySQL({ sql });
+        return JSON.stringify(rows);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to execute MSSQL query: ${errorMessage}. Please verify your MSSQL_URL connection string is correct and the database is accessible.`);
+      }
     },
   }),
 } satisfies ToolSet;

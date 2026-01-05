@@ -5,7 +5,7 @@ import { listSchemas, listTables, listColumns } from "./introspection";
 
 export const rdbmsTools = {
   listSchemas: tool({
-    description: "ONLY FOR POSTGRESQL - List available schemas in the connected PostgreSQL database. DO NOT use this for MSSQL/SQL Server - use listSchemasMssql instead.",
+    description: "POSTGRESQL ONLY. Use when user says: postgres, PostgreSQL, pg. Tool name: listSchemas (NO Mssql suffix). NEVER use for MSSQL - use listSchemasMssql instead. List schemas in PostgreSQL database.",
     inputSchema: z.object({}),
     execute: async () => {
       const schemas = await listSchemas();

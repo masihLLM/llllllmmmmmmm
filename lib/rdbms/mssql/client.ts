@@ -4,51 +4,138 @@ import { getEffectiveMssqlUrl } from "@/lib/services/settings";
 
 let sharedPool: sql.ConnectionPool | null = null;
 
+function parseMssqlUrl(url: string): sql.config {
+  // Parse URL format: mssql://user:password@host:port/database?options
+  const urlObj = new URL(url);
+  
+  const config: any = {
+    server: urlObj.hostname,
+    user: urlObj.username,
+    password: urlObj.password,
+  };
+
+  // Parse database from pathname (remove leading '/')
+  const database = urlObj.pathname.slice(1);
+  if (database) {
+    config.database = database;
+  }
+
+  // Add port if specified
+  if (urlObj.port) {
+    config.port = parseInt(urlObj.port, 10);
+  }
+
+  // Parse query parameters into options object
+  const options: any = {};
+  urlObj.searchParams.forEach((value, key) => {
+    // Convert string booleans to actual booleans
+    if (value === 'true') {
+      options[key] = true;
+    } else if (value === 'false') {
+      options[key] = false;
+    } else if (!isNaN(Number(value)) && value !== '') {
+      options[key] = Number(value);
+    } else {
+      options[key] = value;
+    }
+  });
+
+  // Add options object if there are any options
+  if (Object.keys(options).length > 0) {
+    config.options = options;
+  }
+
+  return config as sql.config;
+}
+
+function createConnectionPool(connectionString: string): sql.ConnectionPool {
+  // Check if it's a URL format (mssql://...)
+  if (connectionString.startsWith('mssql://')) {
+    try {
+      const config = parseMssqlUrl(connectionString);
+      return new sql.ConnectionPool(config);
+    } catch (error) {
+      throw new Error(`Failed to parse MSSQL URL: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Check if it's a JSON config object
+  try {
+    const config = JSON.parse(connectionString);
+    // Validate it's an object with expected properties
+    if (typeof config === 'object' && config !== null) {
+      return new sql.ConnectionPool(config);
+    }
+  } catch {
+    // If not JSON, treat as standard connection string
+    // Connection string format: "Server=...;Database=...;User Id=...;Password=...;"
+    return new sql.ConnectionPool(connectionString);
+  }
+  // Fallback to connection string if JSON parse succeeded but wasn't an object
+  return new sql.ConnectionPool(connectionString);
+}
+
 export function getMssqlPool(): sql.ConnectionPool {
   if (sharedPool) return sharedPool;
   const connectionString = process.env.MSSQL_URL;
   if (!connectionString) {
-    // Defer to async initializer path; however, for compatibility we throw if not set and not yet initialized.
     throw new Error("MSSQL_URL environment variable is not set.");
   }
-  // MSSQL connection string can be a string or config object
-  // Try to parse as config object first, otherwise use as string
-  try {
-    const config = JSON.parse(connectionString);
-    sharedPool = new sql.ConnectionPool(config);
-  } catch {
-    // If not JSON, treat as connection string
-    sharedPool = new sql.ConnectionPool(connectionString);
-  }
+  sharedPool = createConnectionPool(connectionString);
   return sharedPool;
 }
 
 export async function withClient<T>(handler: (client: sql.Request) => Promise<T>): Promise<T> {
   let pool = sharedPool;
   if (!pool) {
-    const effective = await getEffectiveMssqlUrl();
-    // Try to parse as config object first, otherwise use as string
     try {
-      const config = JSON.parse(effective);
-      sharedPool = new sql.ConnectionPool(config);
-    } catch {
-      // If not JSON, treat as connection string
-      sharedPool = new sql.ConnectionPool(effective);
+      const effective = await getEffectiveMssqlUrl();
+      sharedPool = createConnectionPool(effective);
+      pool = sharedPool;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to get MSSQL connection URL: ${errorMessage}`);
     }
-    pool = sharedPool;
   }
   
   // Ensure connection is established
-  if (!pool.connected) {
-    await pool.connect();
+  try {
+    if (!pool.connected && !pool.connecting) {
+      await pool.connect();
+    }
+    // Wait for connection if it's still connecting
+    if (pool.connecting) {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("MSSQL connection timeout"));
+        }, 10000);
+        
+        const checkConnection = () => {
+          if (pool.connected) {
+            clearTimeout(timeout);
+            resolve();
+          } else if (!pool.connecting) {
+            clearTimeout(timeout);
+            reject(new Error("MSSQL connection failed"));
+          } else {
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+      });
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to connect to MSSQL database: ${errorMessage}. Please check your MSSQL_URL connection string.`);
   }
   
   const request = pool.request();
   try {
     const result = await handler(request);
     return result;
-  } finally {
-    // Connection pool handles cleanup automatically
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`MSSQL query execution failed: ${errorMessage}`);
   }
 }
 
