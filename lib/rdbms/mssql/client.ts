@@ -3,6 +3,7 @@ import "dotenv/config";
 import { getEffectiveMssqlUrl } from "@/lib/services/settings";
 
 let sharedPool: sql.ConnectionPool | null = null;
+let currentConnectionUrl: string | null = null;
 
 function parseMssqlUrl(url: string): sql.config {
   // Parse URL format: mssql://user:password@host:port/database?options
@@ -75,28 +76,44 @@ function createConnectionPool(connectionString: string): sql.ConnectionPool {
   return new sql.ConnectionPool(connectionString);
 }
 
-export function getMssqlPool(): sql.ConnectionPool {
-  if (sharedPool) return sharedPool;
-  const connectionString = process.env.MSSQL_URL;
-  if (!connectionString) {
-    throw new Error("MSSQL_URL environment variable is not set.");
+export function resetMssqlPool() {
+  if (sharedPool) {
+    // Close the existing pool asynchronously (don't wait)
+    sharedPool.close().catch(() => {
+      // Ignore errors when closing
+    });
+    sharedPool = null;
   }
-  sharedPool = createConnectionPool(connectionString);
-  return sharedPool;
+  currentConnectionUrl = null;
 }
 
 export async function withClient<T>(handler: (client: sql.Request) => Promise<T>): Promise<T> {
-  let pool = sharedPool;
-  if (!pool) {
-    try {
-      const effective = await getEffectiveMssqlUrl();
-      sharedPool = createConnectionPool(effective);
-      pool = sharedPool;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to get MSSQL connection URL: ${errorMessage}`);
-    }
+  // Always get the effective URL from settings (which checks database settings first, then env)
+  let effective: string;
+  try {
+    effective = await getEffectiveMssqlUrl();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to get MSSQL connection URL: ${errorMessage}`);
   }
+
+  // Check if we need to recreate the pool (URL changed or pool doesn't exist)
+  if (!sharedPool || currentConnectionUrl !== effective) {
+    // Close old pool if it exists and URL changed
+    if (sharedPool && currentConnectionUrl !== effective) {
+      try {
+        await sharedPool.close();
+      } catch {
+        // Ignore errors when closing old pool
+      }
+    }
+    
+    // Create new pool with the effective URL
+    sharedPool = createConnectionPool(effective);
+    currentConnectionUrl = effective;
+  }
+  
+  const pool = sharedPool;
   
   // Ensure connection is established
   try {

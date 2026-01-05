@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { resetMssqlPool } from "@/lib/rdbms/mssql/client";
 
 export interface SettingsDTO {
   openaiBaseUrl: string | null;
@@ -11,7 +12,7 @@ export interface SettingsDTO {
 let memorySettings: { openaiBaseUrl: string | null; openaiApiKey: string | null; postgresUrl: string | null; mssqlUrl: string | null } | null = null;
 let initialized = false;
 
-async function ensureLoaded() {
+async function  ensureLoaded() {
   if (initialized && memorySettings) return;
   const row = await prisma.appSettings.findUnique({ where: { id: 1 } });
   memorySettings = {
@@ -57,6 +58,12 @@ export async function updateSettings(partial: { openaiBaseUrl?: string; openaiAp
     mssqlUrl: updated.mssqlUrl ?? null,
   };
   initialized = true;
+  
+  // Invalidate MSSQL connection pool if MSSQL URL was updated
+  if (typeof partial.mssqlUrl !== 'undefined') {
+    resetMssqlPool();
+  }
+  
   return updated;
 }
 
